@@ -7,7 +7,7 @@ Responsibilities:
 - Serve static frontend assets and index.html for single-origin production deployment
 - Expose REST API endpoints (chat, predict, clear, history, new-chat, health check)
 - Forward prompts to the Google Gemini API (via SDK or REST API fallback)
-- Handle rate limiting, exception handling, and logging
+- Handle rate limiting, CORS preflights, exception handling, and logging
 """
 
 import os
@@ -35,9 +35,10 @@ from utils import (
     ConversationStore,
 )
 
-# Custom exception for Gemini quota errors
+
 class QuotaExceededError(Exception):
     pass
+
 
 # ----------------------------------------------------------------------------
 # GENERATIVE AI INTEGRATION SETUP (SDK with REST API Fallback)
@@ -75,8 +76,11 @@ ROOT_DIR = os.path.dirname(BASE_DIR)
 # FLASK APP SETUP
 # ----------------------------------------------------------------------------
 app = Flask(__name__, static_folder=ROOT_DIR, static_url_path="")
+app.url_map.strict_slashes = False
 app.config["SECRET_KEY"] = SECRET_KEY
-CORS(app)
+
+# Enable CORS globally for all routes & origins
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 rate_limiter = RateLimiter(max_requests=30, window_seconds=60)
 conversation_store = ConversationStore()
@@ -96,6 +100,15 @@ SAFETY_SETTINGS = [
 ]
 
 
+@app.after_request
+def add_cors_headers(response):
+    """Ensure CORS headers are attached to every response including preflights and errors."""
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, PUT, DELETE"
+    return response
+
+
 def get_client_id():
     forwarded_for = request.headers.get("X-Forwarded-For", "")
     if forwarded_for:
@@ -107,7 +120,6 @@ def generate_gemini_content(contents):
     """
     Generate content using Gemini SDK if available, or direct REST API call as a robust fallback.
     """
-    # 1. Try SDK if loaded
     if genai_sdk is not None and GEMINI_API_KEY:
         try:
             model = genai_sdk.GenerativeModel(
@@ -121,7 +133,6 @@ def generate_gemini_content(contents):
         except Exception as sdk_ex:
             logger.warning(f"SDK generation failed, attempting REST API call: {sdk_ex}")
 
-    # 2. Direct REST API call (guaranteed working fallback across all Python versions)
     url = f"https://generativelanguage.googleapis.com/v1/models/{GEMINI_MODEL_NAME}:generateContent?key={GEMINI_API_KEY}"
     headers = {"Content-Type": "application/json"}
     payload = {
@@ -154,9 +165,12 @@ def generate_gemini_content(contents):
 # ROUTES
 # ----------------------------------------------------------------------------
 
-@app.route("/", methods=["GET"])
+@app.route("/", methods=["GET", "OPTIONS"])
 def index():
     """Serve index.html when accessed via browser, or API info when requested as JSON."""
+    if request.method == "OPTIONS":
+        return "", 204
+
     accept_header = request.headers.get("Accept", "")
     if "text/html" in accept_header or not accept_header:
         index_path = os.path.join(ROOT_DIR, "index.html")
@@ -179,24 +193,32 @@ def index():
     }), 200
 
 
-@app.route("/api/health", methods=["GET"])
+@app.route("/api/health", methods=["GET", "OPTIONS"])
 def health_check():
     """Explicit health check endpoint."""
+    if request.method == "OPTIONS":
+        return "", 204
     return jsonify({"status": "healthy", "service": "BuildMate API"}), 200
 
 
-@app.route("/<path:filename>", methods=["GET"])
+@app.route("/<path:filename>", methods=["GET", "OPTIONS"])
 def serve_static(filename):
     """Serve static files (style.css, script.js, assets, etc.) from root directory."""
+    if request.method == "OPTIONS":
+        return "", 204
+
     file_path = os.path.join(ROOT_DIR, filename)
     if os.path.exists(file_path):
         return send_from_directory(ROOT_DIR, filename)
     return jsonify({"error": "File not found"}), 404
 
 
-@app.route("/new-chat", methods=["POST"])
+@app.route("/new-chat", methods=["POST", "OPTIONS"])
 def new_chat():
     """Create a new session ID and return it to caller."""
+    if request.method == "OPTIONS":
+        return "", 204
+
     try:
         session_id = str(uuid.uuid4())
         conversation_store.new_session(session_id)
@@ -210,13 +232,16 @@ def new_chat():
         return jsonify({"error": "Failed to create new session.", "details": str(exc)}), 500
 
 
-@app.route("/chat", methods=["POST"])
-@app.route("/predict", methods=["POST"])
+@app.route("/chat", methods=["POST", "OPTIONS"])
+@app.route("/predict", methods=["POST", "OPTIONS"])
 def chat():
     """
     Main chat & ML prediction endpoint.
     Accepts JSON body with 'message' or 'prompt' or 'code'.
     """
+    if request.method == "OPTIONS":
+        return "", 204
+
     client_id = get_client_id()
 
     if not rate_limiter.is_allowed(client_id):
@@ -290,9 +315,12 @@ def chat():
         }), 500
 
 
-@app.route("/clear", methods=["POST"])
+@app.route("/clear", methods=["POST", "OPTIONS"])
 def clear_chat():
     """Clear conversation history for a session."""
+    if request.method == "OPTIONS":
+        return "", 204
+
     try:
         data = request.get_json(silent=True) or {}
         session_id = data.get("session_id", "default")
@@ -312,9 +340,12 @@ def clear_chat():
         return jsonify({"error": "Failed to clear chat history.", "details": str(exc)}), 500
 
 
-@app.route("/history", methods=["GET"])
+@app.route("/history", methods=["GET", "OPTIONS"])
 def get_history():
     """Retrieve history for session."""
+    if request.method == "OPTIONS":
+        return "", 204
+
     try:
         session_id = request.args.get("session_id", "default")
         history = conversation_store.get_history(session_id)
