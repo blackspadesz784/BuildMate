@@ -11,8 +11,13 @@ Responsibilities:
 """
 
 import os
+import sys
 import uuid
 import json
+
+# Ensure backend/ modules (prompts.py, utils.py) are always importable
+# regardless of where gunicorn is launched from (root or backend/).
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Set protobuf implementation to pure Python to ensure maximum compatibility
 os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
