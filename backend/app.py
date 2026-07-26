@@ -83,7 +83,7 @@ app.config["SECRET_KEY"] = SECRET_KEY
 # Enable CORS globally for all routes & origins
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-rate_limiter = RateLimiter(max_requests=30, window_seconds=60)
+rate_limiter = RateLimiter(max_requests=200, window_seconds=60)
 conversation_store = ConversationStore()
 
 GENERATION_CONFIG = {
