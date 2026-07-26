@@ -8,7 +8,7 @@ Responsibilities:
 - Expose REST API endpoints (chat, predict, clear, history, new-chat, health check)
 - Forward prompts to the Google Gemini API (via SDK or REST API fallback)
 - Provide robust fallback pair-programming responses during API quota limits
-- Handle rate limiting, CORS preflights, exception handling, and logging
+- Handle CORS preflights, exception handling, and logging
 """
 
 import os
@@ -32,13 +32,8 @@ from prompts import build_conversation_payload
 from utils import (
     logger,
     validate_chat_request,
-    RateLimiter,
     ConversationStore,
 )
-
-
-class QuotaExceededError(Exception):
-    pass
 
 
 # ----------------------------------------------------------------------------
@@ -83,7 +78,6 @@ app.config["SECRET_KEY"] = SECRET_KEY
 # Enable CORS globally for all routes & origins
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-rate_limiter = RateLimiter(max_requests=200, window_seconds=60)
 conversation_store = ConversationStore()
 
 GENERATION_CONFIG = {
@@ -108,13 +102,6 @@ def add_cors_headers(response):
     response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
     response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS, PUT, DELETE"
     return response
-
-
-def get_client_id():
-    forwarded_for = request.headers.get("X-Forwarded-For", "")
-    if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
-    return request.remote_addr or "unknown"
 
 
 def get_smart_fallback_response(user_message: str) -> str:
@@ -411,23 +398,10 @@ def chat():
     if request.method == "OPTIONS":
         return "", 204
 
-    client_id = get_client_id()
-
-    if not rate_limiter.is_allowed(client_id):
-        retry_after = rate_limiter.seconds_until_retry(client_id)
-        logger.warning(f"Rate limit exceeded for client: {client_id}")
-        response = jsonify({
-            "error": "Rate limit exceeded. Please wait a moment before trying again.",
-            "retry_after_seconds": retry_after,
-        })
-        response.status_code = 429
-        response.headers["Retry-After"] = str(retry_after)
-        return response
-
     data = request.get_json(silent=True) or {}
     is_valid, error_message = validate_chat_request(data)
     if not is_valid:
-        logger.warning(f"Invalid request from {client_id}: {error_message}")
+        logger.warning(f"Invalid request: {error_message}")
         return jsonify({"error": error_message}), 400
 
     user_message = (data.get("message") or data.get("prompt") or data.get("code") or "").strip()
@@ -454,7 +428,6 @@ def chat():
 
     except Exception as exc:
         logger.exception(f"Unexpected error handling request for session {session_id}.")
-        # Even on error, return structured pair programmer fallback to prevent app failure
         fallback = get_smart_fallback_response(user_message)
         return jsonify({
             "reply": fallback,
