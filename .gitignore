@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+*.so
+
+# Virtual environment
+venv/
+env/
+.env
+.env.local
+.env.*.local
+*.env
+
+# Keep .env.example (it's a template with no real secrets)
+!.env.example
+
+# Flask
+instance/
+*.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+logs/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Node (if any)
+node_modules/
+npm-debug.log*
+
+# OS
+Thumbs.db

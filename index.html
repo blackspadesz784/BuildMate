@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BuildMate | AI Pair Programmer & Software Engineering Assistant</title>
+<meta name="description" content="BuildMate - Your AI-powered pair programmer for coding, debugging, DSA, system design, ML and full-stack development." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛠️</text></svg>">
+
+<!-- Fonts: Space Grotesk (display), Inter (body), JetBrains Mono (code/terminal) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- Highlight.js for code syntax highlighting -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ===================== SIDEBAR ===================== -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="brand">
+        <span class="brand-mark">&gt;_</span>
+        <div class="brand-text">
+          <span class="brand-title">Build<span style="color: var(--accent-violet);">Mate</span></span>
+          <span class="brand-subtitle">AI Pair Programmer</span>
+        </div>
+      </div>
+      <button class="icon-btn sidebar-close-btn" id="sidebarCloseBtn" aria-label="Close sidebar">✕</button>
+    </div>
+
+    <button class="new-chat-btn" id="newChatBtn">
+      <span class="plus-icon">+</span>
+      New Chat
+    </button>
+
+    <div class="sidebar-section-label">Conversation history</div>
+    <nav class="conversation-list" id="conversationList">
+      <!-- Conversation history items injected here by script.js -->
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="capability-tags">
+        <span class="tag">.py</span>
+        <span class="tag">.js</span>
+        <span class="tag">.sql</span>
+        <span class="tag">.java</span>
+        <span class="tag">.cpp</span>
+        <span class="tag">+more</span>
+      </div>
+      <button class="clear-chat-btn" id="clearChatBtn">
+        🗑 Clear current chat
+      </button>
+    </div>
+  </aside>
+
+  <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+  <!-- ===================== MAIN PANEL ===================== -->
+  <main class="main-panel">
+
+    <!-- Topbar (mobile & compact) -->
+    <header class="topbar">
+      <button class="icon-btn" id="sidebarOpenBtn" aria-label="Open sidebar">☰</button>
+      <span class="topbar-title">BuildMate</span>
+      <span class="status-pill"><span class="status-dot"></span>Online</span>
+    </header>
+
+    <!-- Scrollable content: hero (shown when empty) + chat log -->
+    <div class="chat-scroll-area" id="chatScrollArea">
+
+      <!-- ============ HERO SECTION ============ -->
+      <section class="hero" id="heroSection">
+        <div class="hero-terminal">
+          <div class="terminal-bar">
+            <span class="dot red"></span>
+            <span class="dot yellow"></span>
+            <span class="dot green"></span>
+            <span class="terminal-path">~/buildmate</span>
+          </div>
+          <div class="terminal-body">
+            <p class="terminal-line"><span class="prompt-symbol">$</span> <span class="typed-line" id="typedLine"></span><span class="cursor-blink">▌</span></p>
+            <ul class="boot-log" id="bootLog">
+              <li data-delay="0">[ OK ] Loaded module <b>code_generation</b></li>
+              <li data-delay="120">[ OK ] Loaded module <b>debugging_engine</b></li>
+              <li data-delay="240">[ OK ] Loaded module <b>dsa_explainer</b></li>
+              <li data-delay="360">[ OK ] Loaded module <b>system_design</b></li>
+              <li data-delay="480">[ OK ] Loaded module <b>ml_prediction_engine</b></li>
+              <li data-delay="600">[READY] BuildMate online. Ready to code.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h1 class="hero-heading">Ship software faster with BuildMate</h1>
+        <p class="hero-subheading">
+          Generate, debug, refactor, and architect full-stack applications — plus DSA, System Design, ML models, APIs, and DevOps.
+        </p>
+
+        <div class="hero-cards" id="heroCards">
+          <button class="hero-card" data-prompt="Explain the time and space complexity of quicksort with a Python implementation.">
+            <span class="hero-card-icon">⚡</span>
+            <span class="hero-card-title">Explain DSA</span>
+            <span class="hero-card-desc">Quicksort complexity & code</span>
+          </button>
+          <button class="hero-card" data-prompt="Debug this Python error: TypeError: 'NoneType' object is not subscriptable">
+            <span class="hero-card-icon">🐞</span>
+            <span class="hero-card-title">Debug an error</span>
+            <span class="hero-card-desc">Identify & fix a Python bug</span>
+          </button>
+          <button class="hero-card" data-prompt="Generate a REST API in Node.js and Express with a /users endpoint connected to MongoDB.">
+            <span class="hero-card-icon">🧩</span>
+            <span class="hero-card-title">Generate code</span>
+            <span class="hero-card-desc">Node.js + Express REST API</span>
+          </button>
+          <button class="hero-card" data-prompt="Explain how a Load Balancer, Cache and Database work together in a system design for a URL shortener.">
+            <span class="hero-card-icon">🏗️</span>
+            <span class="hero-card-title">System Design</span>
+            <span class="hero-card-desc">Design a scalable shortener</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ============ CHAT LOG ============ -->
+      <section class="chat-log" id="chatLog" aria-live="polite">
+        <!-- Chat bubbles injected here by script.js -->
+      </section>
+
+      <!-- Typing indicator -->
+      <div class="typing-indicator" id="typingIndicator" hidden>
+        <div class="avatar avatar-ai">BM</div>
+        <div class="typing-bubble">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============ COMPOSER ============ -->
+    <footer class="composer">
+      <div class="composer-inner">
+        <textarea
+          id="messageInput"
+          class="composer-input"
+          placeholder="Ask BuildMate about code, debugging, DSA, ML, system design..."
+          rows="1"
+          maxlength="8000"
+        ></textarea>
+        <button class="send-btn" id="sendBtn" aria-label="Send message">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 12L20 4L14 20L11 13L4 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+          </svg>
+        </button>
+      </div>
+      <p class="composer-hint">Enter to send &nbsp;•&nbsp; Shift+Enter for new line</p>
+    </footer>
+
+  </main>
+</div>
+
+<!-- Toast notification for copy actions etc. -->
+<div class="toast" id="toast"></div>
+
+<!-- Third-party libs: Markdown parsing + syntax highlighting -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+<script src="script.js"></script>
+</body>
+</html>

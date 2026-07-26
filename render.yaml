@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: buildmate
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn backend.app:app
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-2.0-flash
+      - key: FLASK_DEBUG
+        value: "false"
