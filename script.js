@@ -10,12 +10,17 @@
 
   // --------------------------------------------------------------------------
   // CONFIG & API BASE URL RESOLUTION
-  // Dynamic: uses window.location.origin when served via Flask, or defaults to Render backend URL
+  // Explicit: points to Render backend unless served directly by Flask (onrender.com or port 5000)
   // --------------------------------------------------------------------------
   const RENDER_BACKEND_URL = "https://buildmate-vz8z.onrender.com";
-  const API_BASE_URL = (window.location.origin && !window.location.origin.includes("5500") && !window.location.protocol.includes("file"))
-    ? window.location.origin
-    : RENDER_BACKEND_URL;
+
+  function getApiBaseUrl() {
+    const origin = window.location.origin || "";
+    const isFlaskOrigin = origin.includes("onrender.com") || origin.includes("5000");
+    return isFlaskOrigin ? origin : RENDER_BACKEND_URL;
+  }
+
+  const API_BASE_URL = getApiBaseUrl();
 
   // --------------------------------------------------------------------------
   // DOM REFERENCES
