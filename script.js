@@ -10,11 +10,12 @@
 
   // --------------------------------------------------------------------------
   // CONFIG & API BASE URL RESOLUTION
-  // Dynamic: uses window.location.origin when served via Flask, or defaults to 127.0.0.1:5000
+  // Dynamic: uses window.location.origin when served via Flask, or defaults to Render backend URL
   // --------------------------------------------------------------------------
+  const RENDER_BACKEND_URL = "https://buildmate-vz8z.onrender.com";
   const API_BASE_URL = (window.location.origin && !window.location.origin.includes("5500") && !window.location.protocol.includes("file"))
     ? window.location.origin
-    : "http://127.0.0.1:5000";
+    : RENDER_BACKEND_URL;
 
   // --------------------------------------------------------------------------
   // DOM REFERENCES

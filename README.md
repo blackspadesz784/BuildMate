@@ -2,6 +2,8 @@
 
 **BuildMate** is a full-stack, production-ready AI software engineering platform. Built with a modular **Python + Flask** REST API backend integrated with Google Gemini AI and a hand-crafted, dark-mode terminal/IDE frontend interface.
 
+🌐 **Live Deployed Backend**: [https://buildmate-vz8z.onrender.com](https://buildmate-vz8z.onrender.com)
+
 Whether you're generating full-stack web components, debugging runtime errors, reviewing system architectures, or practicing Data Structures & Algorithms, **BuildMate** provides intelligent, structured pair-programming assistance.
 
 ---
